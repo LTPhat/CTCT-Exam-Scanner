@@ -90,7 +90,7 @@ def get_blocks(img, test = False, resize_first = True):
 
     # Sort block_images base on x-coordinate
     img_blocks = sorted(img_blocks, key = lambda x: x[1][0])
-    
+
     assert len(final_contours) == len(img_blocks)
 
     if test:
@@ -190,7 +190,7 @@ def get_answer(model, list_choice):
 if __name__ == "__main__":
     from model.model import CNN_Model
     cnn = CNN_Model(weight_path= offset.weights_path).build_model(rt=True)
-    img_dir = "GiayThi-0.png"
+    img_dir = "./samples/GiayThi-0.png"
     res = cv2.imread(img_dir)
     res = cv2.resize(res, offset.resize_shape)
     img_blocks, contours  = get_blocks(res[offset.header_offset:, :], test = False, resize_first=False)
