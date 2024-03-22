@@ -17,19 +17,17 @@ class CNN_Model(object):
 
     def build_model(self, rt=False):
         self.model = Sequential()
-        self.model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=(20, 20, 1)))
+        self.model.add(Conv2D(16, (3, 3), padding='same', activation='relu', input_shape=(30, 30, 1)))
+        self.model.add(Conv2D(16, (3, 3), activation='relu'))
+        self.model.add(MaxPooling2D(pool_size=(2, 2)))
+        self.model.add(Dropout(0.5))
+
+        self.model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
         self.model.add(Conv2D(32, (3, 3), activation='relu'))
         self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Dropout(0.25))
-
-        self.model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-        self.model.add(Conv2D(64, (3, 3), activation='relu'))
-        self.model.add(MaxPooling2D(pool_size=(2, 2)))
-        self.model.add(Dropout(0.25))
+        self.model.add(Dropout(0.5))
 
         self.model.add(Flatten())
-        self.model.add(Dense(512, activation='relu'))
-        self.model.add(Dropout(0.5))
         self.model.add(Dense(128, activation='relu'))
         self.model.add(Dropout(0.5))
         self.model.add(Dense(2, activation='softmax'))
@@ -42,22 +40,22 @@ class CNN_Model(object):
 
     @staticmethod
     def load_data():
-        dataset_dir = './datasets/'
+        dataset_dir = './custom_dataset/'
         images = []
         labels = []
 
         for img_path in Path(dataset_dir + 'unchoice/').glob("*.png"):
             img = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
-            img = cv2.resize(img, (20, 20), cv2.INTER_AREA)
-            img = img.reshape((20, 20, 1))
+            img = cv2.resize(img, (30, 30), cv2.INTER_AREA)
+            img = img.reshape((30, 30, 1))
             label = to_categorical(0, num_classes=2)
             images.append(img / 255.0)
             labels.append(label)
 
         for img_path in Path(dataset_dir + 'choice/').glob("*.png"):
             img = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
-            img = cv2.resize(img, (20, 20), cv2.INTER_AREA)
-            img = img.reshape((20, 20, 1))
+            img = cv2.resize(img, (30, 30), cv2.INTER_AREA)
+            img = img.reshape((30, 30, 1))
             label = to_categorical(1, num_classes=2)
             images.append(img / 255.0)
             labels.append(label)
@@ -86,7 +84,7 @@ class CNN_Model(object):
         cpt_save = ModelCheckpoint('./model/weight.h5', save_best_only=True, monitor='val_acc', mode='max')
 
         print("Training......")
-        self.model.fit(images, labels, callbacks=[cpt_save, reduce_lr], verbose=1, epochs=10, validation_split=0.15, batch_size=32,
+        self.model.fit(images, labels, callbacks=[cpt_save, reduce_lr], verbose=1, epochs=20, validation_split=0.2, batch_size=32,
                        shuffle=True)
 
 if __name__ == "__main__":

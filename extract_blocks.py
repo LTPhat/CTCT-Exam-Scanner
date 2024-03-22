@@ -11,7 +11,7 @@ This file code includes code to extract:
 - MSSV_block: BLock contain MSSV
 """
 
-def preprocess(img, gauss_filter_size = 19, thresh_block_size = 45):
+def preprocess(img,gauss_filter_size = 19, thresh_block_size = 45):
     """
     Filter-Threshold-Morph --> Preprocessing
     Input: Original image
@@ -23,6 +23,7 @@ def preprocess(img, gauss_filter_size = 19, thresh_block_size = 45):
     #Gassian blur
     blured = cv2.GaussianBlur(gray_img, (gauss_filter_size, gauss_filter_size), 0)
     #set a threshold
+
     thresh = cv2.adaptiveThreshold(blured, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, thresh_block_size, 2)
     # result = thresh
     #invert so that the grid line and text are line, the rest is black
@@ -37,9 +38,9 @@ def preprocess(img, gauss_filter_size = 19, thresh_block_size = 45):
 
 
 
-def find_main_blocks(threshold_img):
+def find_largest_boundary(threshold_img):
     """
-    Find largest main_blocks (containing for 4 answer columns)
+    Find ans paper in original image
     """
     contours, hierachy =  cv2.findContours(threshold_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key = cv2.contourArea, reverse = True)
@@ -137,7 +138,7 @@ def image_alignment(img, resize_shape=param.resize_shape):
 
     """
     threshold = preprocess(img)
-    paper_contour = find_main_blocks(threshold_img=threshold)
+    paper_contour = find_largest_boundary(threshold_img=threshold)
     corner_list = get_corner(paper_contour)
     transformed_img, _ = warp_image(corner_list, img)
     res_img = cv2.resize(transformed_img, resize_shape)
@@ -161,7 +162,6 @@ def find_mssv_block(threshold_img):
         approx = cv2.approxPolyDP(con, epsilon=0.01 * perimeter, closed =  True)
         num_of_ptr = len(approx)
         if num_of_ptr == 4 and area > 10000:
-            # Found paper
             polygon.append(con)
             if len(polygon) == 3:
                 return polygon[1]
@@ -177,7 +177,7 @@ def find_mssv_block(threshold_img):
 
 if __name__ == "__main__":
     # One sample
-    dir = "./samples/16.jpg"
+    dir = "./samples/12.jpg"
     img = cv2.imread(dir)
     print(img.shape)
     img_show = cv2.resize(img, (800, 600))
@@ -193,7 +193,7 @@ if __name__ == "__main__":
     cv2.waitKey(0)
 
 
-    paper_contour  = find_main_blocks(threshold_img=threshold)
+    paper_contour  = find_largest_boundary(threshold_img=threshold)
     print(paper_contour)
     corner_list = get_corner(paper_contour)
     tf_image, _ = warp_image(corner_list, img)
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     cv2.imshow("Threshold", threshold_show)
     cv2.waitKey(0)
 
-    bound = find_main_blocks(threshold_img=threshold)
+    bound = find_largest_boundary(threshold_img=threshold)
     cv2.drawContours(main_block, [bound], -1, (0, 255, 0), 2)
 
     main_block_show = cv2.resize(main_block, (800, 600))
@@ -235,26 +235,26 @@ if __name__ == "__main__":
     cv2.imwrite("main_block16.jpg", transformed_img)
 
 
-    # header = first_res[:param.header_offset, :]
-    # header_show = cv2.resize(header, (800, 600))
-    # cv2.imshow("header", header_show)
-    # cv2.waitKey(0)
-    # threshold = preprocess(header, gauss_filter_size=3, thresh_block_size=9)
-    # threshold_show = cv2.resize(threshold, (800, 600))
-    # cv2.imshow("Threshold", threshold_show)
-    # cv2.waitKey(0)
-    # bound = find_mssv_block(threshold_img=threshold)
-    # cv2.drawContours(header, [bound[1]], -1, (0, 255, 0), 2)
+    header = first_res[:param.header_offset, :]
+    header_show = cv2.resize(header, (800, 600))
+    cv2.imshow("header", header_show)
+    cv2.waitKey(0)
+    threshold = preprocess(header, gauss_filter_size=3, thresh_block_size=9)
+    threshold_show = cv2.resize(threshold, (800, 600))
+    cv2.imshow("Threshold", threshold_show)
+    cv2.waitKey(0)
+    bound = find_mssv_block(threshold_img=threshold)
+    cv2.drawContours(header, [bound[1]], -1, (0, 255, 0), 2)
 
-    # main_block_show = cv2.resize(header, (800, 600))
-    # cv2.imshow("second", main_block_show)
-    # cv2.waitKey(0)
+    main_block_show = cv2.resize(header, (800, 600))
+    cv2.imshow("second", main_block_show)
+    cv2.waitKey(0)
 
-    # corner_list = get_corner(bound[1], corner_bound_offset=0)
-    # transformed_img, _ = warp_image(corner_list, header)
-    # transformed_img_show = cv2.resize(transformed_img, (800, 600))
+    corner_list = get_corner(bound[1], corner_bound_offset=0)
+    transformed_img, _ = warp_image(corner_list, header)
+    transformed_img_show = cv2.resize(transformed_img, (800, 600))
     
-    # cv2.imshow("second", transformed_img_show)
-    # cv2.waitKey(0)
+    cv2.imshow("second", transformed_img_show)
+    cv2.waitKey(0)
 
     # cv2.imwrite("header16.jpg", transformed_img)
