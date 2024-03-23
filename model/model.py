@@ -84,7 +84,7 @@ class CNN_Model(object):
         cpt_save = ModelCheckpoint('./model/weight.h5', save_best_only=True, monitor='val_acc', mode='max')
 
         print("Training......")
-        self.model.fit(images, labels, callbacks=[cpt_save, reduce_lr], verbose=1, epochs=20, validation_split=0.2, batch_size=32,
+        self.model.fit(images, labels, callbacks=[cpt_save, reduce_lr], verbose=1, epochs=25, validation_split=0.2, batch_size=32,
                        shuffle=True)
 
 if __name__ == "__main__":
