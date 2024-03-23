@@ -17,7 +17,7 @@ class MultipleChoiceScanner(QWidget):
         super().__init__()
 
         self.setWindowTitle("Multiple Choice Scanner")  # Set window title
-        self.setWindowIcon(QIcon('ctct.jpg'))  # Set window icon
+        self.setWindowIcon(QIcon('./logo/ctct.jpg'))  # Set window icon
 
         self.app_name_label = QLabel("<h1>CTCT Multiple Choice Scanner</h1>")
         self.app_name_label.setAlignment(QtCore.Qt.AlignCenter)
@@ -25,12 +25,12 @@ class MultipleChoiceScanner(QWidget):
 
         self.image_folder_label = QLabel("Image Folder:")
         self.image_folder_input = QLineEdit()
-        self.image_folder_button = QPushButton("Browse")
+        self.image_folder_button = QPushButton("Choose")
         self.image_folder_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; padding: 8px 16px; border: none; border-radius: 4px;")
 
         self.dst_folder_label = QLabel("Destination Folder: ")
         self.dst_folder_input = QLineEdit()
-        self.dst_folder_button = QPushButton("Browse")
+        self.dst_folder_button = QPushButton("Choose")
         self.dst_folder_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; padding: 8px 16px; border: none; border-radius: 4px;")
 
         self.max_score_label = QLabel("Max Score:")
@@ -42,7 +42,7 @@ class MultipleChoiceScanner(QWidget):
 
         self.ans_file_label = QLabel("Answer key: (*.txt)")
         self.ans_file_input = QLineEdit()
-        self.ans_file_button = QPushButton("Browse")
+        self.ans_file_button = QPushButton("Choose")
         self.ans_file_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; padding: 8px 16px; border: none; border-radius: 4px;")
         self.init_ui()
 
@@ -93,7 +93,9 @@ class MultipleChoiceScanner(QWidget):
             self.ans_file_input.setText(file_path)
 
     def scan_inputs(self):
-
+        """
+        Process after clicking scan button
+        """
         image_folder = self.image_folder_input.text()
         dst_folder = self.dst_folder_input.text()
         ans_file = self.ans_file_input.text()
@@ -115,7 +117,6 @@ class MultipleChoiceScanner(QWidget):
             # Create dataframe
             df = pd.DataFrame(columns=columns)
             # Scan images in the folder
-            print("SSSSSSSSs")
             for filename in sorted(os.listdir(image_folder)):
                 print(filename)
                 # Process each image and calculate score
@@ -123,22 +124,20 @@ class MultipleChoiceScanner(QWidget):
                 img = image_folder +  "/" + filename
                 if isinstance(img, str):
                     img = cv2.imread(img)
-
                 # ----------Preprocess: Filter - Threshold---------------------- 
-                threshold = preprocess(img,gauss_filter_size=19, thresh_block_size=45)
+                threshold = preprocess(img,gauss_filter_size=19, thresh_block_size=55)
                 # ----------First img alignment: Extract paper from img-----------
                 paper_contour  = find_largest_boundary(threshold_img=threshold)
                 corner_list = get_corner(paper_contour)
                 paper_image, _ = warp_image(corner_list, img)
-
                 # -----------Get score from main_block
-                total_true, total_ans, score = process_main_block(paper_image, true_ans_dir=ans_file)
+                total_true, total_ans, score = process_main_block(paper_image, true_ans_dir=ans_file, max_score=max_score)
                 mssv = process_mssv_block(paper_image)
-                new_row = {"Filename": filename, "MSSV": str(mssv), 'Correct/Total': "{}/{}".format(total_true, total_ans), "Score": str(np.round(score, 2))}
+                new_row = {"Filename": filename, "MSSV": str(mssv), 'Correct/Total': "{}/{}".format(total_true, total_ans), "Score": score}
                 df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-                print(df)
-                print(score)
-                print(mssv)
+                print("Score:", np.round(score, 2))
+                print("MSSV:", mssv)
+                print("Update results \n", df)
 
             # Save csv
             df.to_csv(dst_folder + '/result.csv', index=False)
@@ -146,9 +145,10 @@ class MultipleChoiceScanner(QWidget):
                 
         except Exception as e:
             QMessageBox.warning(self, "Error", f"An error occurred: {str(e)}")
+            QMessageBox.warning(self, "Error", f"Failed to process image: {str(filename)}. Consider updating this image")
             return
 
-        QMessageBox.information(self, "Success", "Scan completed and results saved to CSV.")
+        QMessageBox.information(self, "Success", f"Scan completed and csv results saved at {dst_folder}/result.csv.")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -157,5 +157,3 @@ if __name__ == '__main__':
     window.show()
     sys.exit(app.exec_())
 
-
-# ! Note: CHECK INPUT AND OUTPUT
