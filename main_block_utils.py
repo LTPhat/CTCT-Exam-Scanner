@@ -104,6 +104,12 @@ def get_blocks(img, test = False, resize_first = True):
 
     assert len(final_contours) == len(img_blocks)
 
+    # Resize extracted img_block
+    for idx, item in enumerate(img_blocks):
+        curr_img_block = item[0]
+        curr_img_block = cv2.resize(curr_img_block, offset.box_img_shape)
+        img_blocks[idx][0] = curr_img_block
+
     if test:
         # Show all contours on original image
         cv2.drawContours(img, final_contours, -1, (0, 255, 0), 2)
@@ -115,10 +121,11 @@ def get_blocks(img, test = False, resize_first = True):
             cv2.imshow("Block {}".format(i), block[0])
             cv2.waitKey(0)
         cv2.destroyAllWindows()
+
     return img_blocks, final_contours
 
 
-def get_list_ans(img_blocks, num_of_boxes = 5, box_height_error = 3):
+def get_list_ans(img_blocks, num_of_boxes = 5, box_height_error = 5):
     """
     Function to extract each answer line in each ans_block
     Input: img_blocks - [img, [x, y, w, h]]
@@ -129,8 +136,12 @@ def get_list_ans(img_blocks, num_of_boxes = 5, box_height_error = 3):
         # Each ans_block_img has 5 boxes
         each_box_height = math.ceil(ans_block_img.shape[0] // num_of_boxes)
         # Process each box
-        for i in range(offset.num_of_boxes):
-            box_img = np.array(ans_block_img[i * each_box_height : (i + 1) * each_box_height, :])
+        for i in range(num_of_boxes):
+            # First ans line
+            if i == 0:
+                box_img = np.array(ans_block_img[i * each_box_height: (i + 1) * each_box_height, :])
+            else:
+                box_img = np.array(ans_block_img[i * each_box_height - box_height_error: (i + 1) * each_box_height, :])
             box_height = box_img.shape[0]
             box_img = box_img[box_height_error: box_height - box_height_error, :]
             # Extract answer lines
@@ -143,7 +154,7 @@ def get_list_ans(img_blocks, num_of_boxes = 5, box_height_error = 3):
     return ans_lines
 
 
-def get_bubble_choice(ans_lines, bubble_width = 50, start_x = 60, between_offset = 10):
+def get_bubble_choice(ans_lines, bubble_width = 48, start_x = 50, between_offset = 5):
     """
     Get buble choice from ans_lines
     Input: ans_lines - [q1-img, q2-img, ....]
@@ -155,7 +166,7 @@ def get_bubble_choice(ans_lines, bubble_width = 50, start_x = 60, between_offset
     for i, ans_line in enumerate(ans_lines):
         # The last box has bigger width
         if i >= 75:
-            start  = start_x + 15
+            start  = start_x + 5
         # Remove question id
         ans_line = ans_line[:, start: ]
 
@@ -163,9 +174,13 @@ def get_bubble_choice(ans_lines, bubble_width = 50, start_x = 60, between_offset
             # First bubble of each line
             if j == 0:
                 bubble = ans_line[:, j * bubble_width : (j + 1) * bubble_width]
+            # Last bubble of each line
+            elif j == offset.num_of_choices - 1:
+                bubble = ans_line[:, j * bubble_width : (j + 1) * bubble_width - between_offset]
             else:
             # Other bubbles
                 bubble = ans_line[:, j * bubble_width + between_offset : (j + 1) * bubble_width]
+
             bubble = cv2.threshold(bubble, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
             bubble = cv2.resize(bubble, (30, 30), cv2.INTER_AREA)
             list_choice.append(bubble)
@@ -222,6 +237,11 @@ def get_score(ans_dict, true_ans_dict, max_score = 10):
     Input: 
     ans_dict -- student ans
     true_ans_dict --teacher ans
+    
+    Return:
+    - number of true ans
+    - number of ans
+    - score
     """
     # assert len(ans_dict) == len(true_ans_dict)
 
@@ -236,19 +256,18 @@ def get_score(ans_dict, true_ans_dict, max_score = 10):
             continue
         # Do not get ans or multiple ans --> Wrong
         if len(curr_ans) != 1:
-            print("wrong idx", idx)
+            # print("wrong idx", idx)
             continue
         # Get true ans
         if curr_true_ans[0] in curr_ans and len(curr_ans) == 1:
-            print("True idx", idx)
+            # print("True idx", idx)
             total_true += 1
-        else:
-            print("wrong idx", idx)
+        # else:
+        #     print("wrong idx", idx)
 
-    print(total_true)
     final_score = total_true / total_ans * max_score
 
-    return final_score
+    return total_true, total_ans, final_score
 
 
 

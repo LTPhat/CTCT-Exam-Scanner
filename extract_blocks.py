@@ -166,10 +166,10 @@ def find_mssv_block(threshold_img):
             if len(polygon) == 3:
                 return polygon[1]
         else:
-            raise ValueError("Can not rectangle contour")
+            raise ValueError("Can not rectangle mssv contour")
 
     if len(polygon):
-        raise TypeError("Can not detect paper contour")
+        raise TypeError("Can not detect mssv block")
         
     return polygon
 
