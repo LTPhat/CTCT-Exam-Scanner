@@ -19,11 +19,12 @@ def init_argparse():
                     
     )
     parser.add_argument("--img_dir", required=True, help='Your image directory')
+    parser.add_argument("--key_dir", required=True, help='Your key answer directory')
     
     return parser
 
 
-def process_main_block(paper_image, model = cnn):
+def process_main_block(paper_image,true_ans_dir, model = cnn, test = False):
     """
     End-to-end process for one image
     Input:
@@ -32,8 +33,8 @@ def process_main_block(paper_image, model = cnn):
 # ------------------- MAIN BLOCKS PROCESSING --------------------------------------
     
     # ---------- Extract main block----------------
-    main_block = paper_image[param.header_offset - 100: , :]
-    threshold = preprocess(main_block, gauss_filter_size=15, thresh_block_size=55)
+    main_block = paper_image[param.header_offset - 450: , :]
+    threshold = preprocess(main_block, gauss_filter_size=19, thresh_block_size=55)
 
     # threshold_show = cv2.resize(threshold, (800, 600))
     # cv2.imshow("Threshold", threshold_show)
@@ -50,14 +51,14 @@ def process_main_block(paper_image, model = cnn):
     corner_list = get_corner(main_block_contour, corner_bound_offset=0)
     main_block, _ = warp_image(corner_list, main_block)
 
-    # transformed_img_show = cv2.resize(transformed_img, (800, 600))
+    # transformed_img_show = cv2.resize(main_block, (800, 600))
     # cv2.imshow("warp image", transformed_img_show)
     # cv2.waitKey(0)
-    # transformed_img = cv2.resize(transformed_img, param.main_block_shape)
+    # transformed_img = cv2.resize(main_block, param.main_block_shape)
     # print(transformed_img.shape)
 
     # -------------Extract 4 ans blocks----------
-    ans_columns, _ = get_blocks(main_block, test=False)
+    ans_columns, _ = get_blocks(main_block, test=test)
 
     # -------------Extract all ans lines-----------
     ans_lines = get_list_ans(ans_columns)
@@ -74,10 +75,12 @@ def process_main_block(paper_image, model = cnn):
     # -------------Get answer-------------------
     ans = get_answer(model=model, list_choice = list_choices)
     # ---------------Get true ans-------------------
-    true_ans = read_true_ans("./ans_keys/16.txt", mode="txt")
+    true_ans = read_true_ans(true_ans_dir, mode="txt")
+    print("st ans", ans)
+    print("true ans", true_ans)
     # ----------- Get score ----------------------
-    score = get_score(ans, true_ans)
-    return score
+    total_true, total_ans, score = get_score(ans, true_ans)
+    return total_true, total_ans, score
 
 
 def process_mssv_block(paper_image, model = cnn):
@@ -88,7 +91,7 @@ def process_mssv_block(paper_image, model = cnn):
 
     # ---------------Extract header-------------
     header = paper_image[:param.header_offset, :]
-    threshold = preprocess(header, gauss_filter_size=9, thresh_block_size=25)
+    threshold = preprocess(header, gauss_filter_size=7, thresh_block_size=25)
     # threshold_show = cv2.resize(threshold, (800, 600))
     # cv2.imshow("Threshold", threshold_show)
     # cv2.waitKey(0)
@@ -117,21 +120,20 @@ if __name__ == "__main__":
     parser = init_argparse()
     args   = parser.parse_args()
     img = args.img_dir
-    # img = "./samples/15.jpg"
+    key_dir = args.key_dir
 
-    
     if isinstance(img, str):
         img = cv2.imread(img)
 
     # ----------Preprocess: Filter - Threshold---------------------- 
-    threshold = preprocess(img,gauss_filter_size=19, thresh_block_size=45)
+    threshold = preprocess(img,gauss_filter_size=19, thresh_block_size=55)
     # ----------First img alignment: Extract paper from img-----------
     paper_contour  = find_largest_boundary(threshold_img=threshold)
     corner_list = get_corner(paper_contour)
     paper_image, _ = warp_image(corner_list, img)
 
     # -----------Get score from main_block
-    score = process_main_block(paper_image)
+    total_true, total_ans,  score = process_main_block(paper_image, true_ans_dir=key_dir)
     mssv = process_mssv_block(paper_image)
 
     print(score)
