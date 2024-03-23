@@ -17,6 +17,7 @@ class Params():
         self.bubble_width = 48
         self.main_block_shape = (4200, 4200)
         self.box_img_shape = (300, 900)
+        self.input_shape = (30, 30)
         # Model params
         self.weights_path = "./model/weight.h5"
 

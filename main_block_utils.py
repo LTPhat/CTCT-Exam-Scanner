@@ -125,7 +125,7 @@ def get_blocks(img, test = False, resize_first = True):
     return img_blocks, final_contours
 
 
-def get_list_ans(img_blocks, num_of_boxes = 5, box_height_error = 5):
+def get_list_ans(img_blocks, box_height_error = 5):
     """
     Function to extract each answer line in each ans_block
     Input: img_blocks - [img, [x, y, w, h]]
@@ -134,9 +134,9 @@ def get_list_ans(img_blocks, num_of_boxes = 5, box_height_error = 5):
     ans_lines = []
     for ans_block_img, ans_block_coor in img_blocks:
         # Each ans_block_img has 5 boxes
-        each_box_height = math.ceil(ans_block_img.shape[0] // num_of_boxes)
+        each_box_height = math.ceil(ans_block_img.shape[0] // offset.num_of_boxes)
         # Process each box
-        for i in range(num_of_boxes):
+        for i in range(offset.num_of_boxes):
             # First ans line
             if i == 0:
                 box_img = np.array(ans_block_img[i * each_box_height: (i + 1) * each_box_height, :])
@@ -154,14 +154,14 @@ def get_list_ans(img_blocks, num_of_boxes = 5, box_height_error = 5):
     return ans_lines
 
 
-def get_bubble_choice(ans_lines, bubble_width = 48, start_x = 50, between_offset = 5):
+def get_bubble_choice(ans_lines, start_x = 50, between_offset = 5):
     """
     Get buble choice from ans_lines
     Input: ans_lines - [q1-img, q2-img, ....]
     Ouput: list_choice - list of bubble choices [q1-choice1, q1-choice2, q1-choice3, ...]
     """
     start = start_x
-    bubble_width = bubble_width
+    bubble_width = offset.bubble_width
     list_choice = []
     for i, ans_line in enumerate(ans_lines):
         # The last box has bigger width
@@ -182,7 +182,8 @@ def get_bubble_choice(ans_lines, bubble_width = 48, start_x = 50, between_offset
                 bubble = ans_line[:, j * bubble_width + between_offset : (j + 1) * bubble_width]
 
             bubble = cv2.threshold(bubble, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-            bubble = cv2.resize(bubble, (30, 30), cv2.INTER_AREA)
+            # Resize to fit input shape
+            bubble = cv2.resize(bubble, offset.input_shape, cv2.INTER_AREA)
             list_choice.append(bubble)
 
     assert len(list_choice) == 100 * 5
@@ -243,11 +244,10 @@ def get_score(ans_dict, true_ans_dict, max_score = 10):
     - number of ans
     - score
     """
-    # assert len(ans_dict) == len(true_ans_dict)
 
     total_true = 0
     total_ans = len(true_ans_dict)
-    print("TOtal ans", total_ans)
+    print("Number of test answers:", total_ans)
     for idx in true_ans_dict.keys():
         curr_true_ans = true_ans_dict[idx]
         curr_ans = ans_dict[idx]
@@ -256,15 +256,15 @@ def get_score(ans_dict, true_ans_dict, max_score = 10):
             continue
         # Do not get ans or multiple ans --> Wrong
         if len(curr_ans) != 1:
-            # print("wrong idx", idx)
+            print("Wrong idx", idx)
             continue
         # Get true ans
         if curr_true_ans[0] in curr_ans and len(curr_ans) == 1:
             # print("True idx", idx)
             total_true += 1
-        # else:
-        #     print("wrong idx", idx)
-
+        else:
+            print("Wrong idx", idx)
+    print("Number of true answers: ", total_true)
     final_score = total_true / total_ans * max_score
 
     return total_true, total_ans, final_score

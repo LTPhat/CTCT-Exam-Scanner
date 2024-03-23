@@ -9,8 +9,13 @@ from main_block_utils import *
 from model.model import CNN_Model
 import sys
 import argparse
+
+
+
 cnn = CNN_Model(weight_path= offset.weights_path).build_model(rt=True)
 param = Params()
+
+
 
 
 def init_argparse():
@@ -24,7 +29,7 @@ def init_argparse():
     return parser
 
 
-def process_main_block(paper_image,true_ans_dir, model = cnn, test = False):
+def process_main_block(paper_image, true_ans_dir, model = cnn, test = False, max_score = 10):
     """
     End-to-end process for one image
     Input:
@@ -79,7 +84,7 @@ def process_main_block(paper_image,true_ans_dir, model = cnn, test = False):
     print("st ans", ans)
     print("true ans", true_ans)
     # ----------- Get score ----------------------
-    total_true, total_ans, score = get_score(ans, true_ans)
+    total_true, total_ans, score = get_score(ans, true_ans, max_score)
     return total_true, total_ans, score
 
 
