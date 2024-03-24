@@ -218,17 +218,30 @@ def read_true_ans(true_ans_dir, mode = "txt"):
     """
     Read true ans from two modes:
     mode "txt": True ans store in txt file
-    mode "img": True ans store in the similar image 
     """
-
+    ans_letters = ["A", "B", "C", "D", "E"]
     true_ans_dict = defaultdict(list)
     if mode == "txt":
         with open(true_ans_dir, "r") as file:
             # Read the first line of the file
             lines = file.readlines()
-            for idx, line in enumerate(lines):
-                true_ans_dict[idx+1] = [line[-2]]
-
+            # Question idx
+            curr_idx = 1
+            for _, line in enumerate(lines):
+                # Ignore empty row 
+                if line == "\n":
+                    continue
+                # handling  "A", "B",... not appear in a line 
+                for char in ans_letters:
+                    if char.upper() not in line:
+                        continue
+                # Normal cases
+                true_ans_dict[curr_idx] = [line[-2].upper()]
+                # Increase question id
+                curr_idx += 1
+    else:
+        raise TypeError("Error with answer key file: *.txt extension required.")
+    
     return true_ans_dict
 
 
