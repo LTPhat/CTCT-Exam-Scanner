@@ -12,6 +12,10 @@
 ```python
 conda create -n <your_env_name> python==3.10
 ```
+- Activate new created environment.
+```python
+conda activate <your_env_name>
+```
 - Install libraries and packages.
 ```python
 pip install -r requirement.txt
@@ -37,7 +41,11 @@ pip install -r requirement.txt
 python GUI.py
 ```
 
-## Results
-
+## Demo
+  
 ![alt text](https://github.com/LTPhat/CTCT-Multiple-Choices-Exam-Scanner/blob/main/assets/gui_checked.png)
+
+
+![alt text](https://github.com/LTPhat/CTCT-Multiple-Choices-Exam-Scanner/blob/main/assets/result.png)
+
 
