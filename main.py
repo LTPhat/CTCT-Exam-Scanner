@@ -41,26 +41,26 @@ def process_main_block(paper_image, true_ans_dir, model = cnn, test = False, max
     main_block = paper_image[param.header_offset - 450: , :]
     threshold = preprocess(main_block, gauss_filter_size=19, thresh_block_size=55)
 
-    # threshold_show = cv2.resize(threshold, (800, 600))
-    # cv2.imshow("Threshold", threshold_show)
-    # cv2.waitKey(0)
+    threshold_show = cv2.resize(threshold, (800, 600))
+    cv2.imshow("Threshold", threshold_show)
+    cv2.waitKey(0)
 
     # ----------- Find contour----------------------------
     main_block_contour = find_largest_boundary(threshold_img=threshold)
-    # cv2.drawContours(main_block, [main_block_contour], -1, (0, 255, 0), 2)
-    # main_block_show = cv2.resize(main_block, (800, 600))
-    # cv2.imshow("second", main_block_show)
-    # cv2.waitKey(0)
+    cv2.drawContours(main_block, [main_block_contour], -1, (0, 255, 0), 2)
+    main_block_show = cv2.resize(main_block, (800, 600))
+    cv2.imshow("second", main_block_show)
+    cv2.waitKey(0)
 
     # ----------- Image alignment -----------
     corner_list = get_corner(main_block_contour, corner_bound_offset=0)
     main_block, _ = warp_image(corner_list, main_block)
 
-    # transformed_img_show = cv2.resize(main_block, (800, 600))
-    # cv2.imshow("warp image", transformed_img_show)
-    # cv2.waitKey(0)
-    # transformed_img = cv2.resize(main_block, param.main_block_shape)
-    # print(transformed_img.shape)
+    transformed_img_show = cv2.resize(main_block, (800, 600))
+    cv2.imshow("warp image", transformed_img_show)
+    cv2.waitKey(0)
+    transformed_img = cv2.resize(main_block, param.main_block_shape)
+    print(transformed_img.shape)
 
     # -------------Extract 4 ans blocks----------
     ans_columns, _ = get_blocks(main_block, test=test)
@@ -103,17 +103,17 @@ def process_mssv_block(paper_image, model = cnn):
 
     # ---------------- Find contour---------------------
     mssv_block_contour = find_mssv_block(threshold_img=threshold)
-    # cv2.drawContours(header, [mssv_block_contour], -1, (0, 255, 0), 2)
-    # main_block_show = cv2.resize(header, (800, 600))
-    # cv2.imshow("mssv", main_block_show)
-    # cv2.waitKey(0)
+    cv2.drawContours(header, [mssv_block_contour], -1, (0, 255, 0), 2)
+    main_block_show = cv2.resize(header, (800, 600))
+    cv2.imshow("mssv", main_block_show)
+    cv2.waitKey(0)
 
     # ----------------Image alignment -------------------------
     corner_list = get_corner(mssv_block_contour, corner_bound_offset=0)
     mssv_img, _ = warp_image(corner_list, header)
-    # transformed_img_show = cv2.resize(mssv_img, (800, 600))
-    # cv2.imshow("processed mssv", transformed_img_show)
-    # cv2.waitKey(0)
+    transformed_img_show = cv2.resize(mssv_img, (800, 600))
+    cv2.imshow("processed mssv", transformed_img_show)
+    cv2.waitKey(0)
 
     # ---------------- Get MSSV---------------------------
     mssv = get_mssv_by_processing(model=model, mssv_img=mssv_img)
